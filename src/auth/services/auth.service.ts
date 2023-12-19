@@ -3,18 +3,23 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { SignUpDto } from '../dtos/signUp.dto';
 import { Auth } from '../auth.entity';
+import { DriverService } from 'src/driver/services/driver.service';
+import { Driver } from 'src/driver/driver.entity';
+import { StockService } from 'src/ReceiveStock/services/stock.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     @Inject('AUTH_REPOSITORY') private authRepository: typeof Auth,
     private readonly jwt: JwtService,
+    private readonly driverService:DriverService,
+    private readonly stockService:StockService
   ) {}
 
   // start signup service
   async signUp(BodyOfRequset: SignUpDto) {
     const signUp = await this.authRepository.findOne({
-      where: { name: BodyOfRequset.name },
+      where: { mobile: BodyOfRequset.mobile },
     });
     if (signUp) {
       return {
@@ -41,7 +46,15 @@ export class AuthService {
   async generateTokenAndCreateUser(Body: SignUpDto, hashPassword: string) {
     const generateToken = this.jwt.sign({ name: Body.name });
     if (generateToken) {
-      return await this.createUser(generateToken, Body, hashPassword);
+     const insertUser=await this.createUser(generateToken, Body, hashPassword);
+     const insertToAllRoles=await this.registerAllRoles(Body.role,Body.name)
+      return{
+        status:200,
+        message:{
+          insertUser,
+          insertToAllRoles
+        }
+      } ;
     } else {
       return {
         status: 400,
@@ -50,11 +63,24 @@ export class AuthService {
     }
   }
 
+  async registerAllRoles(role:string,name:string){
+    switch (role) {
+      case 'driver':
+       return this.driverService.insertDriver(name);
+       case 'ReceiveStock':
+       return this.stockService.insertStockReciever(name);
+      default:
+        break;
+    }
+  }
+
   async createUser(token: string, Body: SignUpDto, hashpassword: string) {
     const createUser = await this.authRepository.create({
       password: hashpassword,
       token: token,
       name: Body.name,
+      role:Body.role,
+      mobile:Body.mobile
     });
     if (createUser) {
       return {
@@ -76,7 +102,7 @@ export class AuthService {
 
   async login(Body: SignUpDto) {
     const findUser = await this.authRepository.findOne({
-      where: { name: Body.name },
+      where: { mobile: Body.mobile },
     });
     if (!findUser) {
       return {
@@ -88,7 +114,7 @@ export class AuthService {
     }
   }
 
-  async loginProcess(findedUser: SignUpDto, Body: SignUpDto) {
+  async loginProcess(findedUser: Auth, Body: SignUpDto) {
     const comparePassword = await bcrypt.compare(
       Body.password,
       findedUser.password,

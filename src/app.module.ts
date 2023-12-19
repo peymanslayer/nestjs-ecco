@@ -4,10 +4,14 @@ import { AuthController } from './auth/controller/auth.controller';
 import { AuthService } from './auth/services/auth.service';
 import { AuthProviders } from './auth/auth.provider';
 import { AuthModule } from './auth/auth.module';
+import { OrderModule } from './order/order.module';
+import { CommentService } from './comment/services/comment.service';
+import { CommentModule } from './comment/comment.module';
+import { DriverModule } from './driver/driver.module';
 
 @Module({
-  imports: [DatabaseModule,AuthModule],
-  controllers: [AuthController],
-  providers: [AuthService, ...AuthProviders],
+  imports: [DatabaseModule,AuthModule,OrderModule,CommentModule,DriverModule],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

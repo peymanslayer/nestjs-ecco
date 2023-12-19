@@ -14,4 +14,10 @@ export class Auth extends Model {
 
   @Column
   token:string
+
+  @Column
+  role:string
+
+  @Column
+  mobile:string
 }

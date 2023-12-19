@@ -1,5 +1,10 @@
 import { Sequelize } from 'sequelize-typescript';
 import { Auth } from 'src/auth/auth.entity';
+import { Order } from 'src/order/order,entity';
+import { Comment } from 'src/comment/comment..entity';
+import { Driver } from 'src/driver/driver.entity';
+import { OrderDriver } from 'src/order/orderDriver.entity';
+import { Stock } from 'src/ReceiveStock/stock.entity';
 
 export const databaseProviders = [
   {
@@ -7,13 +12,16 @@ export const databaseProviders = [
     useFactory: async () => {
       const sequelize = new Sequelize({
         dialect: 'mysql',
-        host: 'localhost',
-        port: 3306,
+        host: 'everest.liara.cloud',
+        port: 30389,
         username: 'root',
-        password: 'peyman1378()&P',
-        database: 'nest-ecco',
+        password: 'OarJYbxUV9bSSM9KMfQdV2XB',
+        database: 'nifty_diffie'
       });
       sequelize.addModels([Auth]);
+      sequelize.addModels([Order,Driver,OrderDriver]);
+      sequelize.addModels([Comment]);
+      sequelize.addModels([Stock])
       await sequelize.sync();
       return sequelize;
     },

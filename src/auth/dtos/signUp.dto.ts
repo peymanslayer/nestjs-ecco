@@ -10,5 +10,10 @@ export class SignUpDto {
 
   @IsNotEmpty()
   name:string
+  
+  @IsNotEmpty()
+  role:string
 
+  @IsNotEmpty()
+  mobile:string
 }

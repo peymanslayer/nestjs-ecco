@@ -13,6 +13,7 @@ export class AuthController {
       const signUp = await this.authService.signUp(body);
       response.status(signUp.status).json(signUp.message);
     } catch (err) {
+      console.log(err);
       response.status(500).json('internal server Error');
     }
   }
