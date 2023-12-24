@@ -16,4 +16,12 @@ export class SignUpDto {
 
   @IsNotEmpty()
   mobile:string
+
+  @IsNotEmpty()
+  personelCode:number
+
+  @IsNotEmpty()
+  shopCode:number
+
+  
 }

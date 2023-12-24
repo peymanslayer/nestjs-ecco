@@ -26,4 +26,10 @@ export class CommentService {
       };
     }
   }
+
+  async findCommentByShopId(shopId:number){
+    const find=await this.commentRepository.findOne({where:{shopId:shopId}});
+    return find
+  }
+
 }

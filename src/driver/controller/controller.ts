@@ -35,6 +35,7 @@ export class DriverController {
     );
     response.status(findDriverByName.status).json(findDriverByName.message)
   }catch(err){
+    console.log(err);
     response.status(500).json('inetrnal server error')
   }
   }}

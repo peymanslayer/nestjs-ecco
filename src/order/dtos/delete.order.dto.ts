@@ -12,4 +12,7 @@ export class DeleteOrderDto{
  @IsNotEmpty()
  @IsNumber()
  userId:number
+
+ @IsNotEmpty()
+ deletedAt:Date
 }

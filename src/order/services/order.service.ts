@@ -8,6 +8,8 @@ import { DriverService } from 'src/driver/services/driver.service';
 import { forwardRef } from '@nestjs/common';
 import { OrderDriver } from '../orderDriver.entity';
 import { GenerateCode } from './generate.code';
+import { Op } from 'sequelize';
+import { Comment } from 'src/comment/comment..entity';
 
 @Injectable()
 export class OrderService {
@@ -18,21 +20,26 @@ export class OrderService {
     @Inject(forwardRef(() => DriverService))
     private readonly driverSerice: DriverService,
     private readonly commentService: CommentService,
-    private readonly generateService:GenerateCode
+    private readonly generateService: GenerateCode,
   ) {}
 
   async insertOrder(body: InsertOrderDto) {
     const insertOrder = await this.orderRepository.create<Order>({ ...body });
-    const maxNumberOfShopCode = 1;
-    const minNumberOfShopCode = 1000;
-    if (!body.shopId) {
-      insertOrder.shopId =
-        Math.floor(
-          Math.random() * (maxNumberOfShopCode - minNumberOfShopCode + 1),
-        ) + minNumberOfShopCode;
+    const findOrderByUser = await this.orderRepository.findAll({
+      where: { userId: body.userId },
     }
-    insertOrder.Password5Number = body.Password5Number;
-    insertOrder.save();
+    );
+    for(let i=0;i<findOrderByUser.length;i++){
+      console.log(findOrderByUser[i].id,i);
+      
+      await this.orderRepository.update({
+        numberOfOrder:100+i+1
+      },
+      {
+        where:{id:findOrderByUser[i].id}
+      }
+      )
+    }
     if (insertOrder) {
       return {
         status: 201,
@@ -46,14 +53,25 @@ export class OrderService {
     }
   }
 
+
   async findOrder(body: FindOrderDto) {
-    const findOrder = await this.orderRepository.findOne({
-      where: { shopCode: body.shopId },
+    let findAll=[];
+    const findOrder = await this.orderRepository.findAll({
+      where: { shopId: body.shopId },
     });
+    const findOrderDriverById=await this.orderDriverrRepository.findAll({where:{driverId:body.userId}});
+    for(let i=0;i<findOrder.length;i++){
+     for(let j=0;j<findOrderDriverById.length;j++){
+      if(findOrder[i].id!==findOrderDriverById[j].orderId){
+        findAll.push(findOrder[i])
+      }
+     }
+    }
+    const removeDuplicate=[...new Set(findAll)]
     if (findOrder) {
       return {
         status: 200,
-        message: findOrder,
+        message: removeDuplicate,
       };
     } else {
       return {
@@ -63,36 +81,109 @@ export class OrderService {
     }
   }
 
-  async findOrderByUserId(userId:number){
-   const findOrderByUserId=await this.orderRepository.findAndCountAll({
-    where:{userId:userId}
-   });
-   return{
-    status:200,
-    message:findOrderByUserId
-   }
+  async findRegisteredOrderByDriver(body: FindOrderDto){
+    let findAll=[];
+    const findOrder = await this.orderRepository.findAll({
+      where: {
+        [Op.and]:{
+          shopId: body.shopId,
+          isDeletedByDriver:{
+            [Op.eq]:null
+          }
+        }
+      },
+    });
+    const findOrderDriverById=await this.orderDriverrRepository.findAll({where:{driverId:body.userId}});
+    for(let i=0;i<findOrder.length;i++){
+     for(let j=0;j<findOrderDriverById.length;j++){ 
+        if (findOrder[i].id === findOrderDriverById[j].orderId) {
+        findAll.push(findOrder[i])
+      }
+     }
+    }
+    return await this.findRegisteredOrderByDriverMessage(findAll,findOrder)
+  }
+
+  async findRegisteredOrderByDriverMessage(findAll:Array<InsertOrderDto>,findOrder:Order[]){
+    const removeDuplicate = [...new Set(findAll)];
+    if (findOrder) {
+      return {
+        status: 200,
+        message: removeDuplicate,
+      };
+    } else {
+      return {
+        status: 400,
+        message: 'order not founded',
+      };
+    }
+  }
+
+  async findOrderByShopId(body: FindOrderDto){
+    const findOrder = await this.orderRepository.findAll({
+      where: { 
+        [Op.and]:{
+          shopId: body.shopId,
+          // isDeletedByDriver:null,
+          // registeredPassword:null,
+          deletedAt:null,
+          isRegisteredByDriver:null
+       },
+    }});
+    return{
+      status:200,
+      message:findOrder
+    }
+  }
+
+  async findOrderByUserId(userId: number) {
+    const findOrderByUserId = await this.orderRepository.findAndCountAll({
+      where: { 
+        [Op.and]:{
+          userId: userId ,
+          isDeletedByDriver:null,
+          deletedAt:null
+        }
+      },
+    });
+    return {
+      status: 200,
+      message: findOrderByUserId,
+    };
   }
   async deleteOrderAndUpdateComment(body: DeleteOrderDto) {
     console.log(body);
-    
-    const insertComment = await this.commentService.insertComment(body.comment,body.id);
-    if (insertComment.status==400) {
+
+    const insertComment = await this.commentService.insertComment(
+      body.comment,
+      body.id,
+    );
+    if (insertComment.status == 400) {
       return {
         status: 400,
         message: 'comment not inserted',
       };
     } else {
-      return await this.deleteOrderProcess(body.id,body.userId);
+      return await this.deleteOrderProcess(body.id, body.userId);
     }
   }
 
-  async deleteOrderProcess(id: number,userId:number) {
-    const deleteOrder = await this.orderRepository.destroy({
-      where: { id: id },
+  async deleteOrderProcess(id: number, userId: number) {
+    const time= Date.now()
+    const deleteOrder = await this.orderRepository.update({
+     deletedAt:time
+    },{
+     where: { id: id }
     });
-    const findAllOrder=await this.orderRepository.findAndCountAll({
-      where:{userId:userId}
-    })
+    const findAllOrder = await this.orderRepository.findAndCountAll({
+      where: { 
+       [Op.and]:{
+        userId: userId,
+        deletedAt:null
+       }
+
+       },
+    });
     if (deleteOrder) {
       return {
         status: 200,
@@ -107,7 +198,7 @@ export class OrderService {
   }
 
   async updateOrderDriver(driverId: number, shopId: number, orderId: number) {
-    let array=[];
+    let array = [];
     await this.orderDriverrRepository.create({
       driverId: driverId,
       orderId: orderId,
@@ -116,79 +207,226 @@ export class OrderService {
     const updateOrder = await this.orderDriverrRepository.findAll({
       where: { orderId: orderId },
     });
-    for(let i=0;i<updateOrder.length;i++){
-      let driver=await this.driverSerice.findDriver(updateOrder[i].driverId);
-      array.push(driver)
+    for (let i = 0; i < updateOrder.length; i++) {
+      let driver = await this.driverSerice.findDriver(updateOrder[i].driverId);
+      array.push(driver);
     }
-      return {
-        status: 200,
-        message:array
-      };
-    }
+    return {
+      status: 200,
+      message: array,
+    };
+  }
 
-    async findOrderById(id:number){
-     const findOrderById=await this.orderRepository.findByPk(id);
-     return findOrderById
-    }
+  async findOrderById(id: number) {
+    const findOrderById = await this.orderRepository.findByPk(id);
+    return findOrderById;
+  }
 
-    async updateOrderByPassword(password:number,shopId:number){
-      let generateCode:number
-      const findOneOrder=await this.orderRepository.findByPk(shopId);
-      let passwords=findOneOrder.Password5Number
-      if(passwords==null){
-      generateCode=this.generateService.generateCode().message;
-      }else{
-        generateCode=passwords
-      }
-      const updateOrder=await this.orderRepository.update({
-        Password5Number:generateCode
+  async updateOrderByPassword(password: number, shopId: number) {
+    let generateCode: number;
+    const findOneOrder = await this.orderRepository.findByPk(shopId);
+    let passwords = findOneOrder.Password5Number;
+    if (passwords == null) {
+      generateCode = this.generateService.generateCode().message;
+    } else {
+      generateCode = passwords;
+    }
+    const updateOrder = await this.orderRepository.update(
+      {
+        Password5Number: generateCode,
       },
       {
-        where:{id:shopId}
-      })
+        where: { id: shopId },
+      },
+    );
 
-      if(updateOrder[0]==0){
-        return{
-          status:400,
-          message:'order not update'
+    if (updateOrder[0] == 0) {
+      return {
+        status: 400,
+        message: 'order not update',
+      };
+    } else {
+      return {
+        status: 200,
+        message: findOneOrder,
+      };
+    }
+  }
+  async updateOrder(id: number, body: InsertOrderDto) {
+    const updateOrder = await this.orderRepository.update(
+      { ...body },
+      {
+        where: { id: id },
+      },
+    );
+    if (updateOrder[0] == 0) {
+      return {
+        status: 400,
+        message: 'order not updated',
+      };
+    } else {
+      const findOrderById = await this.orderRepository.findByPk(id);
+      return {
+        status: 200,
+        message: findOrderById,
+      };
+    }
+  }
+
+  async getOrderById(id: number) {
+    const findOrderById = await this.orderRepository.findByPk(id);
+    if (!findOrderById) {
+      return {
+        status: 400,
+        message: 'order not found',
+      };
+    }
+    return {
+      status: 200,
+      message: findOrderById,
+    };
+  }
+
+  async findAllDeletedOrderByShopId(userId:number,shopId:number,body:FindOrderDto){
+   let comments=[];
+   let findAllDeletedOrderByShopId:Array<Order>
+   if(body.afterHistory&&body.afterHistory){
+    findAllDeletedOrderByShopId=await this.orderRepository.findAll({
+      where:{
+        [Op.and]:{
+          userId:userId,
+          shopId:shopId,
+          deletedAt:{
+            [Op.ne]:null
+          },
+          history:{
+            [Op.between]:[body.beforeHistory,body.afterHistory]
+          }
         }
-      }else{
+      },
+     });
+   }else{
+    findAllDeletedOrderByShopId=await this.orderRepository.findAll({
+    where:{
+      [Op.and]:{
+        userId:userId,
+        shopId:shopId,
+        deletedAt:{
+          [Op.ne]:null
+        }
+      }
+    },
+   });
+  }
+
+   for(let i=0;i<findAllDeletedOrderByShopId.length;i++){
+    console.log(findAllDeletedOrderByShopId[i].id,i);
+    
+      const findComments = await this.commentService.findCommentByShopId(
+        findAllDeletedOrderByShopId[i].id,
+      );
+    if(findComments){
+     comments.push(findComments)
+    }
+   };
+
+   return {
+    message:{
+      findAllDeletedOrderByShopId,
+      comments
+    }
+   }
+
+    
+   }
+  
+  async findDeletedOrderByDriver(shopId:number,body:FindOrderDto){
+    let drivers=[];
+    let findDeletedOrderByDriver:Array<Order>
+    if(body.afterHistory&&body.beforeHistory){
+     findDeletedOrderByDriver=await this.orderRepository.findAll({
+      where:{
+        shopId:shopId,
+        isDeletedByDriver:{
+          [Op.ne]:null
+        },
+        history:{
+          [Op.between]:[body.beforeHistory,body.afterHistory]
+        }
+      
+        }
+      })
+    }else{
+       findDeletedOrderByDriver=await this.orderRepository.findAll({
+        where:{
+          shopId:shopId,
+          isDeletedByDriver:{
+            [Op.ne]:null
+          }
+        
+          }
+        })
+    }
+      for(let i=0;i<findDeletedOrderByDriver.length;i++){
+        const findInformaionDriver=await this.driverSerice.findDriver(findDeletedOrderByDriver[i].driver);
+        if(findInformaionDriver){
+        drivers.push(findInformaionDriver)
+        }
+      }
         return{
-          status:200,
-          message:findOneOrder
+          message:{
+            findDeletedOrderByDriver,
+            drivers
+          }
         }
       }
 
-}
- async updateOrder(id:number,body:InsertOrderDto){
-  const updateOrder=await this.orderRepository.update({...body},{
-    where:{id:id}
-  });
-  if(updateOrder[0]==0){
-    return{
-      status:400,
-      message:'order not updated'
-    }
-  }else{
-    const findOrderById=await this.orderRepository.findByPk(id);
-    return{
-      status:200,
-      message:findOrderById
-    }
-  }
- }
 
- async getOrderById(id:number){
-  const findOrderById=await this.orderRepository.findByPk(id);
-  if(!findOrderById){
-    return{
-      status:400,
-      message:'order not found'
+
+    async findAllRegisteredOrderByUser(shopId:number,body:FindOrderDto){
+      let findAllDeletedOrderByShopId:Array<Order>;
+      if(body.afterHistory&&body.beforeHistory){
+       findAllDeletedOrderByShopId=await this.orderRepository.findAll({
+        where:{
+          [Op.and]:{
+            shopId:shopId,
+            deletedAt:{
+              [Op.eq]:null
+            },
+            history:{
+              [Op.between]:[body.beforeHistory,body.afterHistory]
+            }
+          }
+        }
+      });
+    }else{
+      findAllDeletedOrderByShopId=await this.orderRepository.findAll({
+        where:{
+          [Op.and]:{
+            shopId:shopId,
+            deletedAt:{
+              [Op.eq]:null
+            }
+          }
+        }
+      });
     }
+      return findAllDeletedOrderByShopId;
+    }
+
+    async findOrderList(shopId:number,userId:number,body:FindOrderDto){
+      const findAllDeletedOrderByShopId=await this.findAllDeletedOrderByShopId(userId,shopId,body);
+      const findAllRegisteredOrderByUser=await this.findAllRegisteredOrderByUser(shopId,body);
+      const findDeletedOrderByDriver=await this.findDeletedOrderByDriver(shopId,body);
+      return{
+        status:200,
+        message:{
+          findAllDeletedOrderByShopId:findAllDeletedOrderByShopId.message,
+          findAllRegisteredOrderByUser,
+          findDeletedOrderByDriver
+        }
+      }
+    }
+    
   }
-  return{
-    status:200,
-    message:findOrderById
-  }
- }
-} 
+

@@ -1,7 +1,9 @@
-import { Table, Column, Model ,HasMany, BelongsToMany } from 'sequelize-typescript';
+import { Table, Column, Model ,HasMany, BelongsToMany, HasOne } from 'sequelize-typescript';
 import { DataType } from 'sequelize-typescript';
 import { Driver } from 'src/driver/driver.entity';
 import { OrderDriver } from './orderDriver.entity';
+import { Comment } from 'src/comment/comment..entity';
+
 
 @Table
 export class Order extends Model {
@@ -41,13 +43,31 @@ export class Order extends Model {
   @Column({ type: DataType.INTEGER })
   Password5Number:number;
 
-  @Column({ type: DataType.STRING })
-  comment:string;
+  @HasOne(()=>Comment)
+  comment:Comment;
 
   @BelongsToMany(()=>Driver,()=>OrderDriver)
   driverId:Driver[]
 
   @Column
   userId:number
+
+  @Column({type:DataType.INTEGER})
+  registeredPassword:number
+
+  @Column({type:DataType.DATE})
+  deletedAt?: Date;
+
+  @Column({type:DataType.BOOLEAN})
+  isDeletedByDriver:boolean
+
+  @Column({type:DataType.INTEGER})
+  driver:number
+
+  @Column({type:DataType.INTEGER})
+  isRegisteredByDriver:number
+
+  @Column({type:DataType.INTEGER})
+  numberOfOrder:number
   
 }

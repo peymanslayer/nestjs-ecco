@@ -6,6 +6,7 @@ import { Auth } from '../auth.entity';
 import { DriverService } from 'src/driver/services/driver.service';
 import { Driver } from 'src/driver/driver.entity';
 import { StockService } from 'src/ReceiveStock/services/stock.service';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class AuthService {
@@ -13,7 +14,8 @@ export class AuthService {
     @Inject('AUTH_REPOSITORY') private authRepository: typeof Auth,
     private readonly jwt: JwtService,
     private readonly driverService:DriverService,
-    private readonly stockService:StockService
+    private readonly stockService:StockService,
+    private readonly mailService:MailerService
   ) {}
 
   // start signup service
@@ -76,11 +78,15 @@ export class AuthService {
 
   async createUser(token: string, Body: SignUpDto, hashpassword: string) {
     const createUser = await this.authRepository.create({
+      email:Body.email,
       password: hashpassword,
+      originalPassword:Body.password,
       token: token,
       name: Body.name,
       role:Body.role,
-      mobile:Body.mobile
+      mobile:Body.mobile,
+      personelCode:Body.personelCode,
+      shopCode:Body.shopCode
     });
     if (createUser) {
       return {
@@ -102,7 +108,7 @@ export class AuthService {
 
   async login(Body: SignUpDto) {
     const findUser = await this.authRepository.findOne({
-      where: { mobile: Body.mobile },
+      where: { personelCode: Body.personelCode },
     });
     if (!findUser) {
       return {
@@ -122,7 +128,7 @@ export class AuthService {
     if (comparePassword) {
       return {
         status: 200,
-        message: findedUser,
+        message:findedUser
       };
     } else {
       return {
@@ -133,4 +139,49 @@ export class AuthService {
   }
 
   // end of login service
-}
+  async generatePassword(){
+    const maxNumberOfPassword = 99999;
+    const minNumberOfPassword = 10000;
+    const password= Math.floor(
+        Math.random() * (maxNumberOfPassword - minNumberOfPassword) + 1,
+      );
+    return{
+        status:200,
+        message:password
+    }
+  }
+  async sendEmail(body:SignUpDto){
+    const findUserByEmail=await this.authRepository.findOne({where:{email:body.email}});
+    if(!findUserByEmail){
+      return{
+        status:400,
+        message:'user not exist'
+      }
+    }
+    this.mailService.sendMail({
+     from:'peymantaghitash2022@gmail.com',
+     to:body.email,
+     subject:'is email',
+     text:findUserByEmail.originalPassword,
+     html:`<b> ${findUserByEmail.originalPassword} </b>`
+    })
+    return{
+      status:200,
+      message:'email send'
+    }
+   }
+
+   async resetPassword(body:SignUpDto){
+    const findUserByEmail=await this.authRepository.findOne({where:{email:body.email}});
+    const hashPassword=await bcrypt.hash(body.password,10);
+    findUserByEmail.password=hashPassword
+    findUserByEmail.save();
+    return{
+      status:200,
+      message:findUserByEmail
+    }
+   }
+  }
+
+
+

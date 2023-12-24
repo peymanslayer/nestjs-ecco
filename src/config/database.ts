@@ -19,8 +19,7 @@ export const databaseProviders = [
         database: 'nifty_diffie'
       });
       sequelize.addModels([Auth]);
-      sequelize.addModels([Order,Driver,OrderDriver]);
-      sequelize.addModels([Comment]);
+      sequelize.addModels([Order,Driver,OrderDriver,Comment]);
       sequelize.addModels([Stock])
       await sequelize.sync();
       return sequelize;

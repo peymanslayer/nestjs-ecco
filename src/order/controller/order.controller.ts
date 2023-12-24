@@ -35,6 +35,8 @@ export class OrderController {
       const findOrder = await this.orderService.findOrder(body);
       response.status(findOrder.status).json(findOrder.message);
     } catch (err) {
+      console.log(err);
+      
       response.status(500).json('internal server error');
     }
   }
@@ -131,6 +133,60 @@ try{
  const updateOrderById=await this.orderService.updateOrder(body.id,body);
  response.status(updateOrderById.status).json(updateOrderById.message)
 }catch(err){
+  response.status(500).json('internal server error')
+}
+}
+
+@Post('/api/insertToOrderDriver')
+async insertToOrderDriver(@Body() body:FindOrderDto,@Res() response:Response){
+try{
+ const insertToOrderDriver=await this.orderDriverService.insertToOrderDriver(body.shopId,body.userId);
+ response.status(insertToOrderDriver.status).json(insertToOrderDriver.message)
+}catch(err){
+ console.log(err);
+ response.status(500).json('internal server error')
+}
+}
+
+@Post('/api/findRegisteredOrderByDriver')
+async findRegisteredOrderByDriver(@Body() body: FindOrderDto, @Res() response: Response){
+ try{
+  const findRegisteredOrderByDriver=await this.orderService.findRegisteredOrderByDriver(body);
+  response.status(findRegisteredOrderByDriver.status).json(findRegisteredOrderByDriver.message)
+ }catch(err){
+  response.status(500).json('internal server error')
+ }
+} 
+@Post('/api/findOrderByShopId')
+async findOrderByShopId(@Body() body: FindOrderDto, @Res() response: Response){
+try{
+  const findOrderByShopId=await this.orderService.findOrderByShopId(body);
+  response.status(findOrderByShopId.status).json(findOrderByShopId.message)
+}catch(err){
+  response.status(500).json('internal server error')
+}
+}
+
+@Post('/api/orderList')
+async OrderList(@Body() body: FindOrderDto, @Res() response: Response){
+ try{
+  const orderList=await this.orderService.findOrderList(body.shopId,body.userId,body);
+  response.status(orderList.status).json(orderList.message)
+ }catch(err){
+  console.log(err); 
+  response.status(500).json('inetrnal server error')
+ }
+
+}
+
+@Delete('/api/deleteOrderDriver')
+async deleteOrderDriver(@Body() body: FindOrderDto, @Res() response: Response){
+  try{
+  const deleteOrderDriver=await this.orderDriverService.deleteOrderDriverService(body.userId,body.shopId);
+  response.status(deleteOrderDriver.status).json(deleteOrderDriver.message)
+}catch(err){
+  console.log(err);
+  
   response.status(500).json('internal server error')
 }
 }

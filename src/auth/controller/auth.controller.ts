@@ -28,4 +28,26 @@ export class AuthController {
       response.status(500).json('internal server Error');
     }
   }
+
+  @Post('/api/sendEmail')
+  async sendEmail(@Body() body: SignUpDto, @Res() response: Response){
+  try{
+   const sendEmail=await this.authService.sendEmail(body);
+   response.status(sendEmail.status).json(sendEmail.message)
+  }catch(err){
+    console.log(err);
+    response.status(500).json('is internal')
+    
+  }
+  }
+
+  @Post('/api/resetPassword')
+  async resetPassword(@Body() body: SignUpDto, @Res() response: Response){
+    try{
+      const resetPassword=await this.authService.resetPassword(body);
+      response.status(resetPassword.status).json(resetPassword.message)
+    }catch(err){
+      response.status(500).json('inetrnal server error')
+    }
+  }
 }

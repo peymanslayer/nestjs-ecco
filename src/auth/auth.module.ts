@@ -6,6 +6,7 @@ import { AuthProviders } from './auth.provider';
 import { AuthService } from './services/auth.service';
 import { AuthController } from './controller/auth.controller';
 import { DriverModule } from 'src/driver/driver.module';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
@@ -13,7 +14,17 @@ import { DriverModule } from 'src/driver/driver.module';
       secret: '1234rt'
     }),
     StockModule,
-    DriverModule
+    DriverModule,
+    MailerModule.forRoot({
+      transport:{
+        host: 'smtp.gmail.com',
+        auth:{
+          user:'peymantaghitash2022@gmail.com',
+          pass:"zdec igny irrz zcpu"
+
+        }
+      },
+     }),
   ],
   controllers:[AuthController],
   providers:[AuthService,...AuthProviders],

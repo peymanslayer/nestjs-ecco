@@ -20,4 +20,13 @@ export class Auth extends Model {
 
   @Column
   mobile:string
+
+  @Column
+  personelCode:number
+
+  @Column
+  shopCode:number
+
+  @Column
+  originalPassword:string
 }

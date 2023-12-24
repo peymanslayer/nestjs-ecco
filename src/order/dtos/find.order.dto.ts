@@ -11,4 +11,10 @@ export class FindOrderDto{
 
  @IsNotEmpty()
  id:number
+
+ @IsNotEmpty()
+ beforeHistory:string
+
+ @IsNotEmpty()
+ afterHistory:string
 }
