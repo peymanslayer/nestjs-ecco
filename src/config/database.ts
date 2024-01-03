@@ -5,6 +5,8 @@ import { Comment } from 'src/comment/comment..entity';
 import { Driver } from 'src/driver/driver.entity';
 import { OrderDriver } from 'src/order/orderDriver.entity';
 import { Stock } from 'src/ReceiveStock/stock.entity';
+import { Operator } from 'src/operator/operator.schema';
+import { OperatorShop } from 'src/operatorShop/operatorShop.schema';
 
 export const databaseProviders = [
   {
@@ -20,8 +22,10 @@ export const databaseProviders = [
       });
       sequelize.addModels([Auth]);
       sequelize.addModels([Order,Driver,OrderDriver,Comment]);
-      sequelize.addModels([Stock])
-      await sequelize.sync();
+      sequelize.addModels([Stock]);
+      sequelize.addModels([Operator,OperatorShop]);
+      await sequelize.sync().then((e)=>console.log(e)
+      );
       return sequelize;
     },
   },

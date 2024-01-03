@@ -6,6 +6,8 @@ import { forwardRef } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { GenerateCode } from './generate.code';
 import { Op, or } from 'sequelize';
+import { InsertOrderDto } from '../dtos/insert.order.dto';
+import { UpdateOrderDto } from '../dtos/update.order.dto';
 
 @Injectable()
 export class OrderDriverService {
@@ -33,7 +35,7 @@ export class OrderDriverService {
     };
   }
 
-  async insertOrderByDriver(driverId: number, orderId: number) {
+  async insertOrderByDriver(driverId: number, orderId: number,body:UpdateOrderDto) {
     console.log(driverId,orderId);
     
     let array = [];
@@ -41,15 +43,24 @@ export class OrderDriverService {
       driverId: driverId,
       orderId: orderId,
     });
+    const findDriver=await this.driverService.findDriver(driverId);
     const code = this.generateCodeService.generateCode().message;
     const updateOrder=await this.orderRepository.update({
       driver:driverId,
       registeredPassword: code,
-      isRegisteredByDriver:1
+      isRegisteredByDriver:'ثبت شده توسط راننده',
+      driverName:findDriver.message.driverName,
+      historyOfDriver:body.historyOfDriver,
+      hoursOfRegisterDriver:body.hoursOfRegisterDriver
+    },{
+      where:{id:orderId}
+    });
+    const update=await this.orderRepository.update({
+      ...body
     },{
       where:{id:orderId}
     })
-    if(!updateOrder){
+    if(updateOrder[0]==0){
       return{
         status:400,
         message:'order not updated'
@@ -58,11 +69,15 @@ export class OrderDriverService {
     const findAllOrderByOrderId = await this.orderDriverRepository.findAll({
       where: { driverId: driverId },
     });
-
     for (let i = 0; i < findAllOrderByOrderId.length; i++) {
+      console.log( findAllOrderByOrderId[i].orderId,);
+      
       const findOrder = await this.orderService.findOrderById(
         findAllOrderByOrderId[i].orderId,
       );
+      console.log(findOrder)
+      ;
+      
       array.push(findOrder);
     }
 
@@ -112,8 +127,11 @@ export class OrderDriverService {
   //   }
   //  });
    const updateOrder=await this.orderRepository.update({
-    isDeletedByDriver:true,
-    driver:driverId
+    isDeletedByDriver:null,
+    hoursOfRegisterDriver:null,
+    driver:driverId,
+    historyOfDriver:null,
+    isRegisteredByDriver:null
    },
    {
     where:{id:orderId}

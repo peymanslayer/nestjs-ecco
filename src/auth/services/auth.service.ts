@@ -7,6 +7,10 @@ import { DriverService } from 'src/driver/services/driver.service';
 import { Driver } from 'src/driver/driver.entity';
 import { StockService } from 'src/ReceiveStock/services/stock.service';
 import { MailerService } from '@nestjs-modules/mailer';
+import { Sequelize } from 'sequelize';
+import { Workbook } from 'exceljs';
+import * as path from 'path';
+
 
 @Injectable()
 export class AuthService {
@@ -71,6 +75,8 @@ export class AuthService {
        return this.driverService.insertDriver(name);
        case 'ReceiveStock':
        return this.stockService.insertStockReciever(name);
+       case 'companyDriver':
+        return this.stockService.insertStockReciever(name);
       default:
         break;
     }
@@ -78,15 +84,20 @@ export class AuthService {
 
   async createUser(token: string, Body: SignUpDto, hashpassword: string) {
     const createUser = await this.authRepository.create({
-      email:Body.email,
-      password: hashpassword,
+      // email:Body.email,
+      // password: hashpassword,
+      // originalPassword:Body.password,
+      // token: token,
+      // name: Body.name,
+      // role:Body.role,
+      // mobile:Body.mobile,
+      // personelCode:Body.personelCode,
+      // shopCode:Body.shopCode
+      ...Body,
       originalPassword:Body.password,
-      token: token,
-      name: Body.name,
-      role:Body.role,
-      mobile:Body.mobile,
-      personelCode:Body.personelCode,
-      shopCode:Body.shopCode
+      token:token,
+      password: hashpassword,
+
     });
     if (createUser) {
       return {
@@ -163,7 +174,7 @@ export class AuthService {
      to:body.email,
      subject:'is email',
      text:findUserByEmail.originalPassword,
-     html:`<b> ${findUserByEmail.originalPassword} </b>`
+     html:`<b> ${findUserByEmail.originalPassword} personel code ${findUserByEmail.personelCode} </b>`
     })
     return{
       status:200,
@@ -181,7 +192,124 @@ export class AuthService {
       message:findUserByEmail
     }
    }
+
+   async sameUsers(body:SignUpDto){
+    let array=[];
+   const duplicate=await this.authRepository.findAll({
+    attributes:['email'],
+    group:['email'],
+    having:Sequelize.literal('COUNT(*) > 1')
+
+   });
+   for(let i=0;i<duplicate.length;i++){
+   const findAllUsers=await this.authRepository.findAll({
+    where:{email:duplicate[i].email}
+   }) 
+   array.push(findAllUsers)
+  
   }
 
+  const duplicateMobile=await this.authRepository.findAll({
+    attributes:['mobile'],
+    group:['mobile'],
+    having:Sequelize.literal('COUNT(*) > 1')
+
+   });
+   for(let i=0;i<duplicateMobile.length;i++){
+   const findAllUsers=await this.authRepository.findAll({
+    where:{mobile:duplicateMobile[i].mobile}
+   }) 
+   array.push(findAllUsers)
+   
+  }
+  
+    return{
+      status:200,
+      message:array
+    }
+  }
+
+  async findByRole(body:SignUpDto){
+   const findAllUsersByRole=await this.authRepository.findAll({
+    where:{role:body.role}
+   })
+
+   return{
+    status:200,
+    message:findAllUsersByRole
+   }
+  }
+
+  async importDriversExcelToMysql(file:Express.Multer.File){
+    let nameOfDrivers=[];
+    let numberOfDrivers=[];
+   const book=new Workbook();
+   
+   const excelPath=path.join(__dirname,'../../../uploads',file.filename)
+   const readFile=book.xlsx.readFile(excelPath).then ( async()=>{
+    const ws = book.getWorksheet('Sheet1');
+     const c1=ws.getColumn(1);
+     c1.eachCell((x)=>{
+      console.log(x.value);
+      nameOfDrivers.push(x.value)
+     })
+     const c2=ws.getColumn(2);
+     c2.eachCell((y)=>{
+      numberOfDrivers.push(y.value)
+      
+     })
+     for(let i=0;i<nameOfDrivers.length;i++){
+      const hashPassword=await bcrypt.hash('123456',10);
+      const token=this.jwt.sign({name:nameOfDrivers[i]})
+       await this.authRepository.create({
+        name:nameOfDrivers[i],
+        password:hashPassword,
+        originalPassword:'123456',
+        token:token,
+        role:'companyDriver',
+        personelCode:`${numberOfDrivers[i]}`,
+        mobile:numberOfDrivers[i]
+      })
+      await this.driverService.insertDriver(nameOfDrivers[i])
+     }
+   }); 
+  }
+
+  async deleteUser(id:number){
+   const findUser=await this.authRepository.findOne({
+    where:{id:id}
+   });
+   if(findUser.role=='driver'|| findUser.role=='companyDriver'){
+    await this.authRepository.destroy({where:{id:findUser.id}})
+    await this.driverService.deleteDriverByName(findUser.name);
+    return{
+      status:200,
+      message:'driver deleted'
+    }
+   }else{
+    await this.authRepository.destroy({where:{id:findUser.id}})
+    return{
+      status:200,
+      message:'driver deleted'
+    }
+   }
+  }
+
+  async getUserById(id:number){
+   const getUserById=await this.authRepository.findByPk(id);
+   if(getUserById){
+    return{
+      status:200,
+      message:getUserById
+    }
+   }else{
+    return{
+      status:400,
+      message:'user not exist'
+    }
+   }
+  }
+    };
+  
 
 

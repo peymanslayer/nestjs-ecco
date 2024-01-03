@@ -1,8 +1,9 @@
-import { Table, Column, Model } from 'sequelize-typescript';
+import { Table, Column, Model, Unique } from 'sequelize-typescript';
 import { DataType } from 'sequelize-typescript';
 
 @Table
 export class Auth extends Model {
+  @Unique
   @Column({ type: DataType.STRING })
   name: string;
 
@@ -20,10 +21,12 @@ export class Auth extends Model {
 
   @Column
   mobile:string
-
+  
+  @Unique
   @Column
   personelCode:number
 
+  @Unique
   @Column
   shopCode:number
 

@@ -8,9 +8,10 @@ import { OrderModule } from './order/order.module';
 import { CommentService } from './comment/services/comment.service';
 import { CommentModule } from './comment/comment.module';
 import { DriverModule } from './driver/driver.module';
+import { OperatorModule } from './operator/operator.module';
 
 @Module({
-  imports: [DatabaseModule,AuthModule,OrderModule,CommentModule,DriverModule],
+  imports: [DatabaseModule,AuthModule,OrderModule,CommentModule,DriverModule,OperatorModule],
   controllers: [],
   providers: [],
 })

@@ -6,7 +6,7 @@ import { OrderModule } from 'src/order/order.module';
 import { OrderDriverService } from 'src/order/services/orderDriver.service';
 
 @Module({
-  imports: [forwardRef(()=>OrderModule)],
+  imports: [forwardRef(() => OrderModule)],
   controllers: [DriverController],
   providers: [DriverService, ...DriverProviders],
   exports: [DriverService],

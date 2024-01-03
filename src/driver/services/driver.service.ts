@@ -81,4 +81,9 @@ export class DriverService {
    }
   }
 
+  async deleteDriverByName(name:string){
+    const deleteDriverByName=await this.driverRepository.destroy({where:{driverName:name}});
+    return deleteDriverByName
+  }
+
 }

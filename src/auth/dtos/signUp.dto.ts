@@ -18,10 +18,9 @@ export class SignUpDto {
   mobile:string
 
   @IsNotEmpty()
-  personelCode:number
+  personelCode:string
 
   @IsNotEmpty()
   shopCode:number
 
-  
 }
