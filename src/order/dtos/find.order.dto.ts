@@ -96,4 +96,7 @@ export class FindOrderDto{
  @IsNotEmpty()
  basketOfpaakDoughCheckStock:boolean
 
+ @IsNotEmpty()
+ shopCode:string
+
 }

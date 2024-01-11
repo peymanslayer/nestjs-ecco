@@ -1,6 +1,6 @@
 import { IsEmail, IsNotEmpty } from 'class-validator';
 
-export class SignUpDto {
+export class UpdateDto{
   @IsNotEmpty()
   @IsEmail()
   email: string;
@@ -24,6 +24,6 @@ export class SignUpDto {
   shopCode:number
 
   @IsNotEmpty()
-  subscriber:string
+  id:number
 
 }

@@ -8,4 +8,5 @@ export class InsertOperatorDto{
     mobile:string   
     role:string
     userId:number
+    subscriber:string
 }

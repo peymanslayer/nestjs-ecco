@@ -32,4 +32,7 @@ export class Auth extends Model {
 
   @Column
   originalPassword:string
+
+  @Column
+  subscriber:string
 }

@@ -10,6 +10,7 @@ import { UpdateOrderDto } from '../dtos/update.order.dto';
 import { HttpService } from '@nestjs/axios';
 import { Workbook } from 'exceljs';
 import * as path from 'path'
+import { ExcelDto } from '../dtos/excelDto';
 
 @Controller()
 export class OrderController {
@@ -37,7 +38,7 @@ export class OrderController {
       response.status(findOrder.status).json(findOrder.message);
     } catch (err) {
       console.log(err);
-      
+
       response.status(500).json('internal server error');
     }
   }
@@ -282,5 +283,53 @@ async deletedOrderExcel(@Res() response: Response){
  }
 }
 
+@Post('/api/isGeneratedPasswordByDriver')
+async isGeneratedPasswordByDriver(@Body() body: FindOrderDto, @Res() response: Response){
+ try{
+  const isGeneratedPasswordByDriver=await this.orderService.isGeneratedPasswordByDriver(body.id);
+  response.status(isGeneratedPasswordByDriver.status).json(isGeneratedPasswordByDriver.message)
+ }catch(err){
+  console.log(err);
+  
+  response.status(500).json('internal server error')
+ }
+}
+
+@Get('/api/listOfExcelOrderByShopCode/:shopId')
+async listOfExcelOrderByShopCode(@Param() body: ExcelDto, @Res() response: Response){
+ try{
+  const listOfExcelOrderByShopCode= await this.orderService.listOfExcelOrderByShopCode(body.shopId);
+  response.setHeader('Content-Disposition', 'attachment; filename="exported-data.xlsx"');
+  response.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  response.send(listOfExcelOrderByShopCode)
+ }catch(err){
+  console.log(err);
+  
+  response.status(500).json('internal server error')
+ }
+}
+
+@Post('/api/findAllByShopCode')
+async findAllByShopCode(@Body() body: FindOrderDto, @Res() response: Response){
+  try{
+   const findAllByShopCode= await this.orderService.findAllByShopCode(body.shopCode,body);
+   response.status(findAllByShopCode.status).json(findAllByShopCode.message)
+  }catch(err){
+    console.log(err);
+    
+   response.status(500).json('internal server error')
+  }
+}
+
+@Post('/api/findAllOrdersByFilter')
+async findAllOrdersByFilter(@Body() body: FindOrderDto, @Res() response: Response){
+ try{
+  const findAllOrdersByFilter= await this.orderService.findAllOrdersByFilter(body);
+  response.status(findAllOrdersByFilter.status).json(findAllOrdersByFilter.message)
+ }catch(err){
+  console.log(err);
+  response.status(500).json('internal server error')
+ }
+}
 
 }

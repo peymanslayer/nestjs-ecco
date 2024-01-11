@@ -86,4 +86,13 @@ export class DriverService {
     return deleteDriverByName
   }
 
+  async updateDriver(beforeName:string,afterName:string){
+   const updateDriver=await this.driverRepository.update({
+    driverName:afterName
+   },{
+    where:{driverName:beforeName}
+   });
+   return updateDriver
+  }
+
 }

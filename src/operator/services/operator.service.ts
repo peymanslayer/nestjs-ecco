@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Operator } from '../operator.schema';
 import { OrderService } from 'src/order/services/order.service';
 import { AuthService } from 'src/auth/services/auth.service';
@@ -11,6 +11,7 @@ export class OperatorService {
     @Inject('OPERATOR_PROVIDER')
     private readonly operatorRepository: typeof Operator,
     private readonly orderService: OrderService,
+    @Inject(forwardRef(()=>AuthService))
     private readonly authService:AuthService
   ) {}
 
@@ -49,5 +50,21 @@ export class OperatorService {
     status:200,
     message:findOneOperatorWithAssociaton
    }
+  }
+
+  async updateOperator(oldName:string,newName:string){
+   const update=this.operatorRepository.update({
+    name:newName
+   },{
+    where:{name:oldName}
+   });
+   return update
+  }
+
+  async deleteOperator(name:string){
+   const deleteOperator=await this.operatorRepository.destroy({
+    where:{name:name}
+   });
+   return deleteOperator
   }
 }

@@ -35,7 +35,9 @@ export class OperatorShopService {
   async exportExcelOfOperator() {
     let data = [];
     const findAllOrderOfOperatorById =
-      await this.operatorShopRepository.findAll();
+      await this.operatorShopRepository.findAll({
+        order:[['createdAt','DESC']]
+      });
     for (let i = 0; i < findAllOrderOfOperatorById.length; i++) {
       data.push({
         shopCode: findAllOrderOfOperatorById[i].shopCode,
@@ -74,6 +76,7 @@ export class OperatorShopService {
               [Op.between]: [body.beforeHistory, body.afterHistory],
             },
           },
+          order:[['registerHistory','DESC']]
         });
       return {
         status: 200,
@@ -83,6 +86,7 @@ export class OperatorShopService {
       const findAllDeletedOrderByShopId =
         await this.operatorShopRepository.findAll({
           where: { operatorId: body.operatorId },
+          order:[['registerHistory','DESC']]
         });
       return {
         status: 200,

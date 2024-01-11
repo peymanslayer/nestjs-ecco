@@ -195,4 +195,7 @@ export class Order extends Model {
 
   @Column({type:DataType.BOOLEAN})
   basketOfpaakDoughCheckStock:boolean
+
+  @Column({type:DataType.BOOLEAN})
+  isGeneratedPasswordByDriver:boolean
 }

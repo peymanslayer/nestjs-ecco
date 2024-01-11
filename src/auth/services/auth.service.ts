@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { SignUpDto } from '../dtos/signUp.dto';
@@ -10,6 +10,8 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { Sequelize } from 'sequelize';
 import { Workbook } from 'exceljs';
 import * as path from 'path';
+import { UpdateDto } from '../dtos/update.dto';
+import { OperatorService } from 'src/operator/services/operator.service';
 
 
 @Injectable()
@@ -19,7 +21,9 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly driverService:DriverService,
     private readonly stockService:StockService,
-    private readonly mailService:MailerService
+    private readonly mailService:MailerService,
+    @Inject(forwardRef(()=>OperatorService))
+    private readonly operatorService:OperatorService
   ) {}
 
   // start signup service
@@ -76,7 +80,7 @@ export class AuthService {
        case 'ReceiveStock':
        return this.stockService.insertStockReciever(name);
        case 'companyDriver':
-        return this.stockService.insertStockReciever(name);
+        return this.driverService.insertDriver(name);
       default:
         break;
     }
@@ -170,11 +174,11 @@ export class AuthService {
       }
     }
     this.mailService.sendMail({
-     from:'peymantaghitash2022@gmail.com',
+     from:'Oshanak.palet@gmail.com',
      to:body.email,
      subject:'is email',
      text:findUserByEmail.originalPassword,
-     html:`<b> ${findUserByEmail.originalPassword} personel code ${findUserByEmail.personelCode} </b>`
+     html:`<div>${findUserByEmail.name} کاربر محترم <br>${findUserByEmail.personelCode} کد پرسنلی  </br><br>${findUserByEmail.originalPassword} رمز عبور </br> </div>`
     })
     return{
       status:200,
@@ -309,7 +313,171 @@ export class AuthService {
     }
    }
   }
-    };
+
+  async updateStockUser(body:UpdateDto){
+    const findedUser=await this.authRepository.findByPk(body.id);
+    if(findedUser.role=='driver'|| findedUser.role=='companyDriver'){
+      if(body.password){
+        if(body.name){
+          const updateDriver=await this.driverService.updateDriver(findedUser.name,body.name)
+        }
+        const hashed=await bcrypt.hash(body.password,10);
+        findedUser.save();
+        const updateUser=await this.authRepository.update({
+          ...body,
+          originalPassword:body.password,
+          password:hashed
+        },{
+          where:{id:body.id}
+        })
+        const findUser=await this.authRepository.findByPk(body.id);
+        return{
+          status:200,
+          message:findUser
+        }
+       }else{
+        if(body.name){
+          const updateDriver=await this.driverService.updateDriver(findedUser.name,body.name)
+        }
+        const updateUser=await this.authRepository.update({
+          ...body,
+        },{
+          where:{id:body.id}
+        })
+        const findUser=await this.authRepository.findByPk(body.id);
+        return{
+          status:200,
+          message:findUser
+        }
+       }
+    }
+    if(findedUser.role=='operator'){
+      if(body.password){
+        if(body.name){
+          const updateDriver=await this.operatorService.updateOperator(findedUser.name,body.name)
+        }
+        const hashed=await bcrypt.hash(body.password,10);
+        findedUser.save();
+        const updateUser=await this.authRepository.update({
+          ...body,
+          originalPassword:body.password,
+          password:hashed
+        },{
+          where:{id:body.id}
+        })
+        const findUser=await this.authRepository.findByPk(body.id);
+        return{
+          status:200,
+          message:findUser
+        }
+       }else{
+        if(body.name){
+          const updateDriver=await this.operatorService.updateOperator(findedUser.name,body.name)
+        }
+        const updateUser=await this.authRepository.update({
+          ...body,
+        },{
+          where:{id:body.id}
+        })
+        const findUser=await this.authRepository.findByPk(body.id);
+        return{
+          status:200,
+          message:findUser
+        }
+       }
+    }
+   if(body.password){
+    const hashed=await bcrypt.hash(body.password,10);
+    findedUser.save();
+    const updateUser=await this.authRepository.update({
+      ...body,
+      originalPassword:body.password,
+      password:hashed
+    },{
+      where:{id:body.id}
+    })
+    const findUser=await this.authRepository.findByPk(body.id);
+    return{
+      status:200,
+      message:findUser
+    }
+   }else{
+    const updateUser=await this.authRepository.update({
+      ...body,
+    },{
+      where:{id:body.id}
+    })
+    const findUser=await this.authRepository.findByPk(body.id);
+    return{
+      status:200,
+      message:findUser
+    }
+   }
+  }
+
+  async findUserByName(name:string){
+   const findAllUsers=await this.authRepository.findAll({
+    where:{name:name}
+   });
+   return{
+    status:200,
+    message:findAllUsers
+   }
+  }
+
+  async getUsersByShopCode(shopCode:string){
+   const findAll=await this.authRepository.findAll({
+    where:{shopCode:shopCode,
+          role:'user'
+    }
+   });
+   return{
+    status:200,
+    message:findAll
+   }
+  }
+
+  async findUsersBySubscriber(subscriber:string){
+   const findAll=await this.authRepository.findAll({
+    where:{ subscriber:subscriber}
+   });
+   const findAllShopCodes=await this.authRepository.findAll({
+    where:{ subscriber:subscriber},
+    attributes:['shopCode']
+   });
+   const removeDuplicate= [...new Set(findAllShopCodes)]
+   return{
+    status:200,
+    message:{
+      findAll,
+      removeDuplicate
+    }
+   }
+  }
+
+  async deleteOperator(id:number){
+   const findOneOperator=await this.authRepository.findOne({
+    where:{id:id}
+   });
+   if(findOneOperator){
+    await this.authRepository.destroy({
+      where:{id:id}
+    });
+    await this.operatorService.deleteOperator(findOneOperator.name);
+    return{
+      status:200,
+      message:'operator deleted'
+    }
+   }else{
+    return{
+      status:400,
+      message:'operator not found'
+    }
+   }
+  }
+  
+  }
+
   
 
 

@@ -27,7 +27,12 @@ export class OrderService {
   ) {}
 
   async insertOrder(body: InsertOrderDto) {
-    const insertOrder = await this.orderRepository.create<Order>({ ...body });
+    const parts=body.history.split('/');
+    const year=parts[0];
+    const month=parseInt(parts[1],10);
+    const day=parseInt(parts[2],10);
+    const fullDate=`${year}/${month}/${day}`
+    const insertOrder = await this.orderRepository.create<Order>({ ...body , history:fullDate});
     const findOrderByUser = await this.orderRepository.findAll({
       where: {},
     });
@@ -99,7 +104,7 @@ export class OrderService {
             [Op.between]: [body.beforeHistory, body.afterHistory],
           },
         },
-        order:[['updatedAt','DESC']]
+        order:[['historyOfDriver','DESC']]
       });
     }else{
     findOrder = await this.orderRepository.findAll({
@@ -111,7 +116,7 @@ export class OrderService {
           [Op.ne]: null,
         },
       },
-      order:[['updatedAt','DESC']]
+      order:[['historyOfDriver','DESC']]
     });
   }
     const findOrderDriverById = await this.orderDriverrRepository.findAll({
@@ -344,6 +349,7 @@ export class OrderService {
             },
           },
         },
+        order:[['history','DESC']]
       });
     } else {
       findAllDeletedOrderByShopId = await this.orderRepository.findAll({
@@ -356,6 +362,7 @@ export class OrderService {
             },
           },
         },
+        order:[['history','DESC']]
       });
     }
 
@@ -392,6 +399,7 @@ export class OrderService {
             [Op.between]: [body.beforeHistory, body.afterHistory],
           },
         },
+        order:[['history','DESC']]
       });
     } else {
       findDeletedOrderByDriver = await this.orderRepository.findAll({
@@ -401,6 +409,7 @@ export class OrderService {
             [Op.ne]: null,
           },
         },
+        order:[['history','DESC']]
       });
     }
     for (let i = 0; i < findDeletedOrderByDriver.length; i++) {
@@ -434,6 +443,7 @@ export class OrderService {
             },
           },
         },
+        order:[['history','DESC']]
       });
     } else {
       findAllDeletedOrderByShopId = await this.orderRepository.findAll({
@@ -445,6 +455,7 @@ export class OrderService {
             },
           },
         },
+        order:[['history','DESC']]
       });
     }
     return findAllDeletedOrderByShopId;
@@ -509,6 +520,7 @@ export class OrderService {
             [Op.between]: [body.beforeHistory, body.afterHistory],
           },
         },
+        order:[['historyOfStock','DESC']]
       });
     }else{
     findAllOrdersRegisteredByStock = await this.orderRepository.findAll({
@@ -519,6 +531,7 @@ export class OrderService {
         },
         deletedAt: null,
       },
+      order:[['historyOfStock','DESC']]
     });
   }
     return {
@@ -628,6 +641,7 @@ export class OrderService {
     for (let i = 0; i < findAllOrder.length; i++) {
       data.push({
         shopId: findAllOrder[i].shopId,
+        numberOfOrder:findAllOrder[i].numberOfOrder,
         woodPallet: findAllOrder[i].woodPallet,
         woodPalletCode:findAllOrder[i].woodPalletCode,
         plasticPallet: findAllOrder[i].plasticPallet,
@@ -648,7 +662,6 @@ export class OrderService {
         shopUser: findAllOrder[i].shopUser,
         history: findAllOrder[i].history,
         hours: findAllOrder[i].hours,
-        orderNumber: findAllOrder[i].orderNumber,
         isRegisteredByDriver: findAllOrder[i].isRegisteredByDriver,
         driverName: findAllOrder[i].driverName,
         historyOfDriver: findAllOrder[i].historyOfDriver,
@@ -662,6 +675,7 @@ export class OrderService {
     const workSheet = book.addWorksheet('stock');
     workSheet.columns = [
       { key: 'کد فروشگاه', header: 'کد فروشگاه', width: 20 },
+      { key: 'شماره سفارش', header: 'شماره سفارش', width: 20 },
       { key: 'پالت چوبی', header: 'پالت چوبی', width: 20 },
       {key:'کد پالت چوبی',header:'کد پالت چوبی',width:20},
       { key: 'پالت پلاستیکی', header: 'پالت پلاستیکی', width: 20 },
@@ -682,7 +696,6 @@ export class OrderService {
       { key: 'کاربر فروشگاه', header: 'کاربر فروشگاه', width: 20 },
       { key: 'تاریخ ثبت فروشگاه', header: 'تاریخ ثبت فروشگاه', width: 20 },
       { key: 'ساعت ثبت فروشگاه', header: 'ساعت ثبت فروشگاه', width: 20 },
-      { key: 'شماره سفارش', header: 'شماره سفارش', width: 20 },
       { key: 'ثبت شده توسط راننده', header: 'ثبت شده توسط راننده', width: 20 },
       { key: 'نام راننده', header: 'نام راننده', width: 20 },
       { key: 'تاریخ ثبت راننده', header: 'تاریخ ثبت راننده', width: 20 },
@@ -710,19 +723,26 @@ export class OrderService {
     for (let i = 0; i < findAllOrder.length; i++) {
       data.push({
         shopId: findAllOrder[i].shopId,
+        numberOfOrder:findAllOrder[i].numberOfOrder,
         woodPallet: findAllOrder[i].woodPallet,
+        woodPalletCode:findAllOrder[i].woodPalletCode,
         plasticPallet: findAllOrder[i].plasticPallet,
+        plasticPalletCode:findAllOrder[i].plasticPalletCode,
         basketOfPegahYogurt: findAllOrder[i].basketOfPegahYogurt,
+        basketOfPegahYogurtCode:findAllOrder[i].basketOfPegahYogurtCode,
         basketOfPegahِDough: findAllOrder[i].basketOfPegahِDough,
+        basketOfPegahِDoughCode:findAllOrder[i].basketOfPegahِDoughCode,
         dominoBasket: findAllOrder[i].dominoBasket,
+        dominoBasketCode:findAllOrder[i].dominoBasketCode,
         harazBasket: findAllOrder[i].harazBasket,
+        harazBasketCode:findAllOrder[i].harazBasketCode,
         kallehBasket: findAllOrder[i].kallehBasket,
+        kallehBasketCode:findAllOrder[i].kallehBasketCode,
         boxBasket: findAllOrder[i].boxBasket,
         shopUser: findAllOrder[i].shopUser,
         history: findAllOrder[i].history,
         hours: findAllOrder[i].hours,
-        orderNumber: findAllOrder[i].orderNumber,
-        comment: findAllOrder[i].comment,
+        commentText: findAllOrder[i].commentText,
       });
     }
 
@@ -730,18 +750,25 @@ export class OrderService {
     const workSheet = book.addWorksheet('stock');
     workSheet.columns = [
       { key: 'کد فروشگاه', header: 'کد فروشگاه', width: 20 },
+      { key: 'شماره سفارش', header: 'شماره سفارش', width: 20 },
       { key: 'پالت چوبی', header: 'پالت چوبی', width: 20 },
+      {key:'کد پالت چوبی',header:'کد پالت چوبی'},
       { key: 'پالت پلاستیکی', header: 'پالت پلاستیکی', width: 20 },
+      {key:'کد پالت پلاستیکی',header:'کد پالت پلاستیکی'},
       { key: 'سبد ماست پگاه', header: 'سبد ماست پگاه', width: 20 },
+      {key:'کد سبد ماست پگاه',header:'کد سبد ماست پگاه'},
       { key: 'سبد دوغ پگاه', header: 'سبد دوغ پگاه', width: 20 },
+      {key:'کد سبد دوغ پگاه',header:'کد سبد دوغ پگاه'},
       { key: 'سبد دومینو', header: 'سبد دومینو', width: 20 },
+      {key:'کد سبد دومینو',header:'کد سبد دومینو'},
       { key: 'سبد هراز', header: 'سبد هراز', width: 20 },
+      {key:'کد سبد هراز',header:'کد سبد هراز'},
       { key: 'سبد کاله', header: 'سبد کاله', width: 20 },
+      {key:'کد سبد کاله',header:'کد سبد کاله'},
       { key: ' سبد کارتن', header: 'سبد کارتن', width: 20 },
       { key: 'کاربر فروشگاه', header: 'کاربر فروشگاه', width: 20 },
       { key: 'تاریخ ثبت فروشگاه', header: 'تاریخ ثبت فروشگاه', width: 20 },
       { key: 'ساعت ثبت فروشگاه', header: 'ساعت ثبت فروشگاه', width: 20 },
-      { key: 'شماره سفارش', header: 'شماره سفارش', width: 20 },
       { key: 'کامنت', header: 'کامنت' },
     ];
     data.forEach((x) => {
@@ -749,5 +776,164 @@ export class OrderService {
     });
     const buffer = await book.xlsx.writeBuffer();
     return buffer;
+  }
+
+  async isGeneratedPasswordByDriver(id:number){
+   const findOneOrder=await this.orderRepository.findByPk(id);
+   findOneOrder.isGeneratedPasswordByDriver=true;
+   findOneOrder.save();
+   return{
+    status:200,
+    message:findOneOrder
+   }
+  }
+
+  async listOfExcelOrderByShopCode(shopCode:string){
+    let data = [];
+    const findAllOrder = await this.orderRepository.findAll({
+      where: { shopId:shopCode },
+    });
+    for (let i = 0; i < findAllOrder.length; i++) {
+      data.push({
+        shopId: findAllOrder[i].shopId,
+        numberOfOrder:findAllOrder[i].numberOfOrder,
+        woodPallet: findAllOrder[i].woodPallet,
+        woodPalletCode:findAllOrder[i].woodPalletCode,
+        plasticPallet: findAllOrder[i].plasticPallet,
+        plasticPalletCode:findAllOrder[i].plasticPalletCode,
+        basketOfPegahYogurt: findAllOrder[i].basketOfPegahYogurt,
+        basketOfPegahYogurtCode:findAllOrder[i].basketOfPegahYogurtCode,
+        basketOfPegahِDough: findAllOrder[i].basketOfPegahِDough,
+        basketOfPegahِDoughCode:findAllOrder[i].basketOfPegahِDoughCode,
+        dominoBasket: findAllOrder[i].dominoBasket,
+        dominoBasketCode:findAllOrder[i].dominoBasketCode,
+        harazBasket: findAllOrder[i].harazBasket,
+        harazBasketCode:findAllOrder[i].harazBasketCode,
+        kallehBasket: findAllOrder[i].kallehBasket,
+        kallehBasketCode:findAllOrder[i].kallehBasketCode,
+        basketOfpaakDough:findAllOrder[i].basketOfpaakDough,
+        basketOfpaakDoughCode:findAllOrder[i].basketOfpaakDoughCode,
+        boxBasket: findAllOrder[i].boxBasket,
+        shopUser: findAllOrder[i].shopUser,
+        history: findAllOrder[i].history,
+        hours: findAllOrder[i].hours,
+        isRegisteredByDriver: findAllOrder[i].isRegisteredByDriver,
+        driverName: findAllOrder[i].driverName,
+        historyOfDriver: findAllOrder[i].historyOfDriver,
+        hoursOfRegisterDriver: findAllOrder[i].hoursOfRegisterDriver,
+        stockName: findAllOrder[i].stockName,
+        historyOfStock: findAllOrder[i].historyOfStock,
+        hoursOfRegisterStock: findAllOrder[i].hoursOfRegisterStock,
+      });
+    }
+    const book = new Workbook();
+    const workSheet = book.addWorksheet('stock');
+    workSheet.columns = [
+      { key: 'کد فروشگاه', header: 'کد فروشگاه', width: 20 },
+      {key:'شماره سفارش',header:'شماره سفارش'},
+      { key: 'پالت چوبی', header: 'پالت چوبی', width: 20 },
+      {key:'کد پالت چوبی',header:'کد پالت چوبی',width:20},
+      { key: 'پالت پلاستیکی', header: 'پالت پلاستیکی', width: 20 },
+      {key:'کد پالت پلاستیکی',header:'کد پالت پلاستیکی',width:20},
+      { key: 'سبد ماست پگاه', header: 'سبد ماست پگاه', width: 20 },
+      {key:'کد سبد ماست پگاه',header:'کد سبد ماست پگاه',width:20},
+      { key: 'سبد دوغ پگاه', header: 'سبد دوغ پگاه', width: 20 },
+      {key:'کد سبد دوغ پگاه',header:'کد سبد دوع پگاه',width:20},
+      { key: 'سبد دومینو', header: 'سبد دومینو', width: 20 },
+      {key:'کد سبد دومینو',header:'کد سبد دومینو',width:20},
+      { key: 'سبد هراز', header: 'سبد هراز', width: 20 },
+      {key:'کد سبد هراز',header:'کد سبد هراز',width:20},
+      { key: 'سبد کاله', header: 'سبد کاله', width: 20 },
+      {key:'کد سبد کاله',header:'کد سبد کاله',width:20},
+      {key:'سبد پاک',header:'سبد پاک',width:20},
+      {key:'کد سبد پاک',header:'کد سبد پاک',width:20},
+      { key: ' سبد کارتن', header: 'سبد کارتن', width: 20 },
+      { key: 'کاربر فروشگاه', header: 'کاربر فروشگاه', width: 20 },
+      { key: 'تاریخ ثبت فروشگاه', header: 'تاریخ ثبت فروشگاه', width: 20 },
+      { key: 'ساعت ثبت فروشگاه', header: 'ساعت ثبت فروشگاه', width: 20 },
+      { key: 'ثبت شده توسط راننده', header: 'ثبت شده توسط راننده', width: 20 },
+      { key: 'نام راننده', header: 'نام راننده', width: 20 },
+      { key: 'تاریخ ثبت راننده', header: 'تاریخ ثبت راننده', width: 20 },
+      { key: 'ساعت ثبت راننده', header: 'ساعت ثبت راننده', width: 20 },
+      { key: 'نام کارگر انبار', header: 'نام کارگر انبار', width: 20 },
+      { key: 'تاریخ ثبت انبار', header: 'تاریخ ثبت انبار', width: 20 },
+      { key: 'ساعت ثبت انبار', header: 'ساعت ثبت انبار', width: 20 },
+    ];
+    data.forEach((x) => {
+      workSheet.addRow(Object.values(x));
+    });
+    const buffer = await book.xlsx.writeBuffer();
+    return buffer;
+  }
+
+  async findAllByShopCode(shopCode:string,body:FindOrderDto){
+   const findMin=await this.orderRepository.findAll({
+    
+   })
+   console.log(findMin);
+   
+   const todayHistory=this.getTime().message.result;
+   if(body.afterHistory&&body.beforeHistory){
+    const findAllByShopCode=await this.orderRepository.findAll({
+      where:{
+        shopId:shopCode,
+
+        history:{
+         [Op.in]:[body.beforeHistory,body.afterHistory]
+        },
+    }
+     });
+     return{
+      status:200,
+      message:findAllByShopCode
+     }
+   }
+   const findAllByShopCode=await this.orderRepository.findAll({
+    where:{
+      shopId:shopCode,
+      history:{
+        [Op.in]:[todayHistory,todayHistory]
+      },
+
+    
+    }
+   })
+   return{
+    status:200,
+    message:findAllByShopCode
+   }
+  } 
+
+  async findAllOrdersByFilter(body:FindOrderDto){
+    const findMin=await this.orderRepository.min('history');
+    console.log(findMin);
+    const todayHistory=this.getTime().message.result;
+   if(body.afterHistory&&body.beforeHistory){
+    const findAllByShopCode=await this.orderRepository.findAll({
+      where:{
+        history:{
+          [Op.in]:[body.beforeHistory,body.afterHistory]
+        },
+      
+      }
+     });
+     return{
+      status:200,
+      message:findAllByShopCode
+     }
+   }
+   const findAllByShopCode=await this.orderRepository.findAll({
+    where:{
+      history:{
+        [Op.in]:[todayHistory,todayHistory]
+      },
+
+    
+    }
+   })
+   return{
+    status:200,
+    message:findAllByShopCode
+   }
   }
 }

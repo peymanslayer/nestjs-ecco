@@ -18,12 +18,19 @@ export const databaseProviders = [
         port: 30389,
         username: 'root',
         password: 'OarJYbxUV9bSSM9KMfQdV2XB',
-        database: 'nifty_diffie'
+        database: 'nifty_diffie',
+        pool: {
+          max: 15,
+          min: 5,
+          idle: 20000,
+          evict: 15000,
+          acquire: 30000
+        },
       });
       sequelize.addModels([Auth]);
       sequelize.addModels([Order,Driver,OrderDriver,Comment]);
       sequelize.addModels([Stock]);
-      sequelize.addModels([Operator,OperatorShop]);
+      sequelize.addModels([Operator,OperatorShop,Auth]);
       await sequelize.sync().then((e)=>console.log(e)
       );
       return sequelize;

@@ -1,5 +1,5 @@
 
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { OperatorController } from './controllers/controller';
 import { OperatorService } from './services/operator.service';
 import { OperatorProviders } from './opertaor.provider';
@@ -10,7 +10,7 @@ import { OperatorShopModule } from 'src/operatorShop/operator.module';
 
 
 @Module({
-  imports:[OrderModule,AuthModule,OperatorShopModule],
+  imports:[OrderModule,forwardRef(()=>AuthModule),OperatorShopModule],
   controllers: [OperatorController],
   providers: [OperatorService, ...OperatorProviders],
   exports:[OperatorService]

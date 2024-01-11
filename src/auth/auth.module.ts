@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { StockService } from 'src/ReceiveStock/services/stock.service';
 import { StockModule } from 'src/ReceiveStock/stock.module';
@@ -7,7 +7,7 @@ import { AuthService } from './services/auth.service';
 import { AuthController } from './controller/auth.controller';
 import { DriverModule } from 'src/driver/driver.module';
 import { MailerModule } from '@nestjs-modules/mailer';
-
+import { OperatorModule } from 'src/operator/operator.module';
 @Module({
   imports: [
     JwtModule.register({
@@ -15,12 +15,13 @@ import { MailerModule } from '@nestjs-modules/mailer';
     }),
     StockModule,
     DriverModule,
+    forwardRef(()=>OperatorModule),
     MailerModule.forRoot({
       transport:{
         host: 'smtp.gmail.com',
         auth:{
-          user:'peymantaghitash2022@gmail.com',
-          pass:"zdec igny irrz zcpu"
+          user:'oshanak2022@gmail.com',
+          pass:"vylk hpbm jbku zkrq"
 
         }
       },

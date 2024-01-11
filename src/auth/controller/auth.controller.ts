@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Res, Get, UseInterceptors, UploadedFile, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Res, Get, UseInterceptors, UploadedFile, Delete, Put } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { SignUpDto } from '../dtos/signUp.dto';
 import { Response } from 'express';
@@ -6,6 +6,8 @@ import { UniqueConstraintError } from 'sequelize';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { DeleteUserDto } from '../dtos/deleteUser';
+import { UpdateDto } from '../dtos/update.dto';
+import { FindUserDto } from '../dtos/findUser';
 
 @Controller()
 export class AuthController {
@@ -123,5 +125,55 @@ export class AuthController {
    }catch(err){
     response.status(500).json('internal server error')
    }
+  }
+
+  @Put('/api/updateStockUser')
+  async updateStockUser(@Body() body: UpdateDto, @Res() response: Response){
+    try{ 
+     const updateStockUser=await this.authService.updateStockUser(body);
+     response.status(updateStockUser.status).json(updateStockUser.message)
+    }catch(err){
+     response.status(500).json('internal server error')
+    } 
+  }
+
+  @Post('/api/findUserByName')
+  async findUserByName(@Body() body: FindUserDto, @Res() response: Response){
+   try{
+    const findUserByName=await this.authService.findUserByName(body.name);
+    response.status(findUserByName.status).json(findUserByName.message)
+   }catch(err){
+    response.status(500).json('internal server error')
+   }
+  }
+
+  @Post('/api/getUsersByShopCode')
+  async getUsersByShopCode(@Body() body: FindUserDto, @Res() response: Response){
+    try{
+     const getUsersByShopCode=await this.authService.getUsersByShopCode(body.shopCode);
+     response.status(getUsersByShopCode.status).json(getUsersByShopCode.message)
+    }catch(err){
+     response.status(500).json('internal server error')
+    }
+  }
+
+  @Post('/api/findAllBySubscriber')
+  async findAllBySubscriber(@Body() body: SignUpDto, @Res() response: Response){
+   try{
+    const findAllBySubscriber=await this.authService.findUsersBySubscriber(body.subscriber);
+    response.status(findAllBySubscriber.status).json(findAllBySubscriber.message)
+   }catch(err){
+    response.status(500).json('internal server error')
+   }
+  }
+
+  @Delete('/api/deleteOperator')
+  async deleteOperator(@Body() body: DeleteUserDto, @Res() response: Response){
+    try{
+      const deleteOperator=await this.authService.deleteOperator(body.id);
+      response.status(deleteOperator.status).json(deleteOperator.message)
+    }catch(err){
+      response.status(500).json('internal server error')
+    }
   }
 }
